@@ -119,7 +119,6 @@ void Runtime::printCaretLine(const std::string &codeLine, int col) const {
     printCaretLine(codeLine, col);
     std::exit(1);
 }
-
 void Runtime::execute(const std::vector<std::unique_ptr<Stmt>> &program) {
     for (const auto &stmt : program) {
         executeStmt(stmt.get());

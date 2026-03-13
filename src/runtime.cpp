@@ -37,8 +37,11 @@ void Runtime::flush() const {
     std::cout << "Syntax Error (line " << line << ", col " << col << "):" << std::endl;
     std::cout << codeLine << std::endl;
     for (int i = 1; i < col; ++i) {
-        if (i - 1 < static_cast<int>(codeLine.size()) && codeLine[i - 1] == '\t') std::cout << "\t";
-        else std::cout << " ";
+        if (i - 1 < static_cast<int>(codeLine.size()) && codeLine[i - 1] == '\t') {
+            std::cout << "\t";
+        } else {
+            std::cout << " ";
+        }
     }
     std::cout << "^" << std::endl;
     std::cout << msg << std::endl;
@@ -58,50 +61,55 @@ void Runtime::execute(const std::vector<std::unique_ptr<Stmt>> &program) {
 }
 
 void Runtime::executeStmt(const Stmt *stmt) {
-    if (const auto *letStmt = dynamic_cast<const LetStmt *>(stmt)) {
-        if (letStmt->initializer) {
-            vars[letStmt->name] = Value(true, evalExpr(letStmt->initializer.get()));
-        } else {
-            vars[letStmt->name] = Value();
+    switch (stmt->kind) {
+        case StmtKind::Let: {
+            const auto *letStmt = static_cast<const LetStmt *>(stmt);
+            if (letStmt->initializer) {
+                vars[letStmt->name] = Value(true, evalExpr(letStmt->initializer.get()));
+            } else {
+                vars[letStmt->name] = Value();
+            }
+            isConst[letStmt->name] = false;
+            return;
         }
-        isConst[letStmt->name] = false;
-        return;
-    }
-
-    if (const auto *constStmt = dynamic_cast<const ConstStmt *>(stmt)) {
-        vars[constStmt->name] = Value(true, evalExpr(constStmt->initializer.get()));
-        isConst[constStmt->name] = true;
-        return;
-    }
-
-    if (const auto *outStmt = dynamic_cast<const OutStmt *>(stmt)) {
-        if (outStmt->stringLiteral) emit(outStmt->text);
-        else emit(evalExpr(outStmt->expression.get()));
-        return;
-    }
-
-    if (const auto *repeatStmt = dynamic_cast<const RepeatStmt *>(stmt)) {
-        int count = evalExpr(repeatStmt->countExpr.get());
-        for (int i = 0; i < count; ++i) {
-            vars[repeatStmt->iterator] = Value(true, i);
-            isConst[repeatStmt->iterator] = false;
-            executeBlock(repeatStmt->body.get());
+        case StmtKind::Const: {
+            const auto *constStmt = static_cast<const ConstStmt *>(stmt);
+            vars[constStmt->name] = Value(true, evalExpr(constStmt->initializer.get()));
+            isConst[constStmt->name] = true;
+            return;
         }
-        return;
-    }
-
-    if (const auto *ifStmt = dynamic_cast<const IfStmt *>(stmt)) {
-        if (evalExpr(ifStmt->condition.get()) != 0) {
-            executeBlock(ifStmt->thenBlock.get());
-        } else if (ifStmt->elseBranch) {
-            executeStmt(ifStmt->elseBranch.get());
+        case StmtKind::Out: {
+            const auto *outStmt = static_cast<const OutStmt *>(stmt);
+            if (outStmt->stringLiteral) {
+                emit(outStmt->text);
+            } else {
+                emit(evalExpr(outStmt->expression.get()));
+            }
+            return;
         }
-        return;
-    }
-
-    if (const auto *blockStmt = dynamic_cast<const BlockStmt *>(stmt)) {
-        executeBlock(blockStmt);
-        return;
+        case StmtKind::Repeat: {
+            const auto *repeatStmt = static_cast<const RepeatStmt *>(stmt);
+            int count = evalExpr(repeatStmt->countExpr.get());
+            for (int i = 0; i < count; ++i) {
+                vars[repeatStmt->iterator] = Value(true, i);
+                isConst[repeatStmt->iterator] = false;
+                executeBlock(repeatStmt->body.get());
+            }
+            return;
+        }
+        case StmtKind::If: {
+            const auto *ifStmt = static_cast<const IfStmt *>(stmt);
+            if (evalExpr(ifStmt->condition.get()) != 0) {
+                executeBlock(ifStmt->thenBlock.get());
+            } else if (ifStmt->elseBranch) {
+                executeStmt(ifStmt->elseBranch.get());
+            }
+            return;
+        }
+        case StmtKind::Block: {
+            executeBlock(static_cast<const BlockStmt *>(stmt));
+            return;
+        }
     }
 }
 
@@ -112,33 +120,46 @@ void Runtime::executeBlock(const BlockStmt *block) {
 }
 
 int Runtime::evalExpr(const Expr *expr) {
-    if (const auto *number = dynamic_cast<const NumberExpr *>(expr)) {
-        return number->value;
-    }
+    switch (expr->kind) {
+        case ExprKind::Number:
+            return static_cast<const NumberExpr *>(expr)->value;
 
-    if (const auto *variable = dynamic_cast<const VariableExpr *>(expr)) {
-        auto it = vars.find(variable->name);
-        if (it == vars.end() || !it->second.initialized) {
-            runtimeError(variable->line, variable->col, "use of uninitialized variable '" + variable->name + "'");
+        case ExprKind::Variable: {
+            const auto *variable = static_cast<const VariableExpr *>(expr);
+            auto it = vars.find(variable->name);
+            if (it == vars.end() || !it->second.initialized) {
+                runtimeError(variable->line, variable->col, "use of uninitialized variable '" + variable->name + "'");
+            }
+            return it->second.number;
         }
-        return it->second.number;
-    }
 
-    if (const auto *binary = dynamic_cast<const BinaryExpr *>(expr)) {
-        int left = evalExpr(binary->left.get());
-        int right = evalExpr(binary->right.get());
+        case ExprKind::Binary: {
+            const auto *binary = static_cast<const BinaryExpr *>(expr);
+            int left = evalExpr(binary->left.get());
+            int right = evalExpr(binary->right.get());
 
-        switch (binary->op) {
-            case TokenType::PLUS: return left + right;
-            case TokenType::MINUS: return left - right;
-            case TokenType::STAR: return left * right;
-            case TokenType::SLASH:
-                if (right == 0) runtimeError(0, 0, "division by zero");
-                return left / right;
-            case TokenType::GT: return left > right ? 1 : 0;
-            case TokenType::LT: return left < right ? 1 : 0;
-            case TokenType::EQEQ: return left == right ? 1 : 0;
-            default: break;
+            switch (binary->op) {
+                case TokenType::PLUS:
+                    return left + right;
+                case TokenType::MINUS:
+                    return left - right;
+                case TokenType::STAR:
+                    return left * right;
+                case TokenType::SLASH:
+                    if (right == 0) {
+                        runtimeError(0, 0, "division by zero");
+                    }
+                    return left / right;
+                case TokenType::GT:
+                    return left > right ? 1 : 0;
+                case TokenType::LT:
+                    return left < right ? 1 : 0;
+                case TokenType::EQEQ:
+                    return left == right ? 1 : 0;
+                default:
+                    break;
+            }
+            break;
         }
     }
 

@@ -11,7 +11,7 @@ public:
     std::vector<Token> tokenize();
 
 private:
-    std::string src;
+    const std::string &src;
     std::size_t pos;
     int line;
     int col;

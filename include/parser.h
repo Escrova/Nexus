@@ -6,7 +6,15 @@
 
 #include "token.h"
 
+enum class ExprKind {
+    Number,
+    Variable,
+    Binary
+};
+
 struct Expr {
+    const ExprKind kind;
+    explicit Expr(ExprKind kind);
     virtual ~Expr() = default;
 };
 
@@ -31,7 +39,18 @@ struct BinaryExpr final : Expr {
     BinaryExpr(TokenType op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right);
 };
 
+enum class StmtKind {
+    Let,
+    Const,
+    Out,
+    Block,
+    If,
+    Repeat
+};
+
 struct Stmt {
+    const StmtKind kind;
+    explicit Stmt(StmtKind kind);
     virtual ~Stmt() = default;
 };
 
@@ -96,7 +115,7 @@ private:
     bool match(TokenType type);
     void skipSeparators();
 
-    Token consume(TokenType type, const std::string &msg);
+    const Token &consume(TokenType type, const std::string &msg);
     [[noreturn]] void syntaxError(const Token &token, const std::string &msg) const;
 
     std::unique_ptr<Stmt> statement();

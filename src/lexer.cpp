@@ -4,7 +4,8 @@
 #include <cstdlib>
 #include <iostream>
 
-Lexer::Lexer(const std::string &source) : src(source), pos(0), line(1), col(1) {}
+Lexer::Lexer(const std::string &source, const std::string &sourceName)
+    : src(source), sourceName(sourceName), pos(0), line(1), col(1) {}
 
 char Lexer::cur() const {
     return pos < src.size() ? src[pos] : '\0';
@@ -59,6 +60,7 @@ std::string Lexer::getLineText(int targetLine) const {
 [[noreturn]] void Lexer::reportError(int errorLine, int errorCol, const std::string &msg) const {
     std::string codeLine = getLineText(errorLine);
 
+    std::cout << sourceName << ":" << errorLine << ":" << errorCol << ": error: " << msg << std::endl;
     std::cout << "Syntax Error (line " << errorLine << ", col " << errorCol << "):" << std::endl;
     std::cout << codeLine << std::endl;
     for (int i = 1; i < errorCol; ++i) {
@@ -132,6 +134,9 @@ std::vector<Token> Lexer::tokenize() {
         }
 
         if (std::isalpha(static_cast<unsigned char>(ch)) || ch == '_') {
+            std::string id;
+            id.reserve(16);
+            while (std::isalnum(static_cast<unsigned char>(cur())) || cur() == '_') {
             std::string id;
             id.reserve(16);
             while (std::isalnum(static_cast<unsigned char>(cur())) || cur() == '_') {

@@ -2,8 +2,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
 
 void Runtime::emit(const std::string &s) { buffer.push_back(s); }
 void Runtime::emit(int v) { buffer.push_back(std::to_string(v)); }
@@ -14,28 +12,37 @@ void Runtime::flush() const {
     }
 }
 
-[[noreturn]] void Runtime::reportError(int line, int col, const std::string &msg) const {
-    std::vector<std::string> lines;
+std::string Runtime::getLineText(int line) const {
+    if (line <= 0) {
+        return "";
+    }
+
+    int currentLine = 1;
     std::size_t start = 0;
-    std::size_t end;
-
-    while ((end = source.find('\n', start)) != std::string::npos) {
-        lines.push_back(source.substr(start, end - start));
-        start = end + 1;
-    }
-    lines.push_back(source.substr(start));
-
-    std::string codeLine;
-    if (line > 0 && static_cast<std::size_t>(line) <= lines.size()) {
-        codeLine = lines[line - 1];
+    while (currentLine < line && start < source.size()) {
+        if (source[start] == '\n') {
+            currentLine++;
+        }
+        start++;
     }
 
+    if (currentLine != line) {
+        return "";
+    }
+
+    std::size_t end = start;
+    while (end < source.size() && source[end] != '\n') {
+        end++;
+    }
+
+    std::string codeLine = source.substr(start, end - start);
     while (!codeLine.empty() && (codeLine.back() == ' ' || codeLine.back() == '\t')) {
         codeLine.pop_back();
     }
+    return codeLine;
+}
 
-    std::cout << "Syntax Error (line " << line << ", col " << col << "):" << std::endl;
-    std::cout << codeLine << std::endl;
+void Runtime::printCaretLine(const std::string &codeLine, int col) const {
     for (int i = 1; i < col; ++i) {
         if (i - 1 < static_cast<int>(codeLine.size()) && codeLine[i - 1] == '\t') {
             std::cout << "\t";
@@ -44,11 +51,21 @@ void Runtime::flush() const {
         }
     }
     std::cout << "^" << std::endl;
-    std::cout << msg << std::endl;
+}
+
+[[noreturn]] void Runtime::reportError(int line, int col, const std::string &msg) const {
+    std::string codeLine = getLineText(line);
+    std::cout << sourceName << ":" << line << ":" << col << ": error: " << msg << std::endl;
+    std::cout << codeLine << std::endl;
+    printCaretLine(codeLine, col);
     std::exit(1);
 }
 
 [[noreturn]] void Runtime::runtimeError(int line, int col, const std::string &msg) const {
+    std::string codeLine = getLineText(line);
+    std::cout << sourceName << ":" << line << ":" << col << ": runtime error: " << msg << std::endl;
+    std::cout << codeLine << std::endl;
+    printCaretLine(codeLine, col);
     std::vector<std::string> lines;
     std::size_t start = 0;
     std::size_t end;
@@ -195,4 +212,5 @@ int Runtime::evalExpr(const Expr *expr) {
     }
 
     runtimeError(0, 0, "invalid expression at runtime");
+    return 0;
 }

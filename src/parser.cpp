@@ -38,6 +38,8 @@ RepeatStmt::RepeatStmt(std::string iterator, std::unique_ptr<Expr> countExpr, st
       countExpr(std::move(countExpr)),
       body(std::move(body)) {}
 
+Parser::Parser(std::vector<Token> tokens, const std::string &source, const std::string &sourceName)
+    : t(std::move(tokens)), source(source), sourceName(sourceName), p(0) {}
 Parser::Parser(std::vector<Token> tokens, const std::string &source)
     : t(std::move(tokens)), source(source), p(0) {}
 
@@ -98,6 +100,7 @@ std::string Parser::getLineText(int targetLine) const {
 [[noreturn]] void Parser::syntaxError(const Token &token, const std::string &msg) const {
     std::string codeLine = getLineText(token.line);
 
+    std::cout << sourceName << ":" << token.line << ":" << token.col << ": error: " << msg << std::endl;
     std::cout << "Syntax Error (line " << token.line << ", col " << token.col << "):" << std::endl;
     std::cout << codeLine << std::endl;
     for (int i = 1; i < token.col; ++i) {
@@ -163,6 +166,7 @@ std::unique_ptr<Stmt> Parser::statement() {
     }
 
     syntaxError(peek(), "unexpected token '" + peek().value + "'");
+    return nullptr;
 }
 
 std::unique_ptr<Stmt> Parser::ifStatement() {
@@ -265,4 +269,5 @@ std::unique_ptr<Expr> Parser::primary() {
     }
 
     syntaxError(peek(), "invalid expression");
+    return nullptr;
 }

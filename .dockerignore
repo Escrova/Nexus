@@ -1,0 +1,12 @@
+.git
+.github
+build
+cmake-build-*
+out
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe

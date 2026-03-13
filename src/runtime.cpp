@@ -176,6 +176,7 @@ int Runtime::evalExpr(const Expr *expr) {
                 case TokenType::SLASH:
                     if (right == 0) {
                         runtimeError(binary->line, binary->col, "division by zero");
+                        runtimeError(0, 0, "division by zero");
                     }
                     return left / right;
                 case TokenType::GT:
@@ -187,6 +188,9 @@ int Runtime::evalExpr(const Expr *expr) {
                 default:
                     runtimeError(binary->line, binary->col, "invalid binary operator");
             }
+                    break;
+            }
+            break;
         }
     }
 

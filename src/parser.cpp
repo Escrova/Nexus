@@ -12,6 +12,8 @@ VariableExpr::VariableExpr(std::string name, int line, int col)
     : Expr(ExprKind::Variable), name(std::move(name)), line(line), col(col) {}
 BinaryExpr::BinaryExpr(TokenType op, int line, int col, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right)
     : Expr(ExprKind::Binary), op(op), line(line), col(col), left(std::move(left)), right(std::move(right)) {}
+BinaryExpr::BinaryExpr(TokenType op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right)
+    : Expr(ExprKind::Binary), op(op), left(std::move(left)), right(std::move(right)) {}
 
 LetStmt::LetStmt(std::string name, std::unique_ptr<Expr> initializer)
     : Stmt(StmtKind::Let), name(std::move(name)), initializer(std::move(initializer)) {}

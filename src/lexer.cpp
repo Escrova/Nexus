@@ -135,6 +135,13 @@ std::vector<Token> Lexer::tokenize() {
             std::string id;
             id.reserve(16);
             while (std::isalnum(static_cast<unsigned char>(cur())) || cur() == '_') {
+            std::string id;
+            id.reserve(16);
+            while (std::isalnum(static_cast<unsigned char>(cur())) || cur() == '_') {
+        if (std::isalpha(static_cast<unsigned char>(ch))) {
+            std::string id;
+            id.reserve(16);
+            while (std::isalnum(static_cast<unsigned char>(cur()))) {
                 id += cur();
                 adv();
             }

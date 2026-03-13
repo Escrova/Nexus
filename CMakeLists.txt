@@ -20,4 +20,7 @@ if (MSVC)
     target_compile_options(nexus PRIVATE /W4)
 else()
     target_compile_options(nexus PRIVATE -Wall -Wextra -Wpedantic)
+    # Avoid runtime libstdc++ mismatches in downstream containers by
+    # linking GNU C++ runtime libraries statically.
+    target_link_options(nexus PRIVATE -static-libstdc++ -static-libgcc)
 endif()

@@ -4,27 +4,37 @@
 #include <iostream>
 #include <utility>
 
-NumberExpr::NumberExpr(int value) : value(value) {}
-VariableExpr::VariableExpr(std::string name, int line, int col) : name(std::move(name)), line(line), col(col) {}
+Expr::Expr(ExprKind kind) : kind(kind) {}
+Stmt::Stmt(StmtKind kind) : kind(kind) {}
+
+NumberExpr::NumberExpr(int value) : Expr(ExprKind::Number), value(value) {}
+VariableExpr::VariableExpr(std::string name, int line, int col)
+    : Expr(ExprKind::Variable), name(std::move(name)), line(line), col(col) {}
 BinaryExpr::BinaryExpr(TokenType op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right)
-    : op(op), left(std::move(left)), right(std::move(right)) {}
+    : Expr(ExprKind::Binary), op(op), left(std::move(left)), right(std::move(right)) {}
 
 LetStmt::LetStmt(std::string name, std::unique_ptr<Expr> initializer)
-    : name(std::move(name)), initializer(std::move(initializer)) {}
+    : Stmt(StmtKind::Let), name(std::move(name)), initializer(std::move(initializer)) {}
 ConstStmt::ConstStmt(std::string name, std::unique_ptr<Expr> initializer)
-    : name(std::move(name)), initializer(std::move(initializer)) {}
+    : Stmt(StmtKind::Const), name(std::move(name)), initializer(std::move(initializer)) {}
 OutStmt::OutStmt(std::string text)
-    : stringLiteral(true), text(std::move(text)), expression(nullptr) {}
+    : Stmt(StmtKind::Out), stringLiteral(true), text(std::move(text)), expression(nullptr) {}
 OutStmt::OutStmt(std::unique_ptr<Expr> expression)
-    : stringLiteral(false), expression(std::move(expression)) {}
+    : Stmt(StmtKind::Out), stringLiteral(false), expression(std::move(expression)) {}
 BlockStmt::BlockStmt(std::vector<std::unique_ptr<Stmt>> statements)
-    : statements(std::move(statements)) {}
+    : Stmt(StmtKind::Block), statements(std::move(statements)) {}
 IfStmt::IfStmt(std::unique_ptr<Expr> condition,
                std::unique_ptr<BlockStmt> thenBlock,
                std::unique_ptr<Stmt> elseBranch)
-    : condition(std::move(condition)), thenBlock(std::move(thenBlock)), elseBranch(std::move(elseBranch)) {}
+    : Stmt(StmtKind::If),
+      condition(std::move(condition)),
+      thenBlock(std::move(thenBlock)),
+      elseBranch(std::move(elseBranch)) {}
 RepeatStmt::RepeatStmt(std::string iterator, std::unique_ptr<Expr> countExpr, std::unique_ptr<BlockStmt> body)
-    : iterator(std::move(iterator)), countExpr(std::move(countExpr)), body(std::move(body)) {}
+    : Stmt(StmtKind::Repeat),
+      iterator(std::move(iterator)),
+      countExpr(std::move(countExpr)),
+      body(std::move(body)) {}
 
 Parser::Parser(std::vector<Token> tokens) : t(std::move(tokens)), p(0) {}
 
@@ -45,7 +55,7 @@ void Parser::skipSeparators() {
     }
 }
 
-Token Parser::consume(TokenType type, const std::string &msg) {
+const Token &Parser::consume(TokenType type, const std::string &msg) {
     if (!match(type)) {
         syntaxError(peek(), msg);
     }
@@ -69,7 +79,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::parseProgram() {
 
 std::unique_ptr<Stmt> Parser::statement() {
     if (match(TokenType::LET)) {
-        Token nameToken = consume(TokenType::IDENT, "expected variable name");
+        const Token &nameToken = consume(TokenType::IDENT, "expected variable name");
         std::unique_ptr<Expr> initializer;
         if (match(TokenType::EQ)) {
             initializer = expression();
@@ -79,7 +89,7 @@ std::unique_ptr<Stmt> Parser::statement() {
     }
 
     if (match(TokenType::CONST)) {
-        Token nameToken = consume(TokenType::IDENT, "expected variable name");
+        const Token &nameToken = consume(TokenType::IDENT, "expected variable name");
         consume(TokenType::EQ, "expected '='");
         auto initializer = expression();
         consume(TokenType::SEMICOLON, "expected ';'");
@@ -127,7 +137,7 @@ std::unique_ptr<Stmt> Parser::ifStatement() {
 }
 
 std::unique_ptr<Stmt> Parser::repeatStatement() {
-    Token it = consume(TokenType::IDENT, "expected iterator");
+    const Token &it = consume(TokenType::IDENT, "expected iterator");
     auto count = expression();
     consume(TokenType::TIMES, "expected 'times'");
     auto body = block();

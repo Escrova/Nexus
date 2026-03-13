@@ -40,8 +40,6 @@ int main(int argc, char **argv) {
 
     Lexer lexer(src, sourceName);
     Parser parser(lexer.tokenize(), src, sourceName);
-    Lexer lexer(src);
-    Parser parser(lexer.tokenize(), src);
     auto program = parser.parseProgram();
 
     runtime.execute(program);

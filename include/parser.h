@@ -50,15 +50,6 @@ enum class StmtKind {
     Repeat
 };
 
-enum class StmtKind {
-    Let,
-    Const,
-    Out,
-    Block,
-    If,
-    Repeat
-};
-
 struct Stmt {
     const StmtKind kind;
     explicit Stmt(StmtKind kind);

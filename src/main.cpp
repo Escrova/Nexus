@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <iostream>
 #include <string>
 
 #include "lexer.h"
@@ -28,6 +29,11 @@ int main(int argc, char **argv) {
         while (std::getline(std::cin, line)) {
             src += line + "\n";
         }
+int main() {
+    std::string src;
+    std::string line;
+    while (std::getline(std::cin, line)) {
+        src += line + "\n";
     }
 
     Runtime runtime;

@@ -3,6 +3,10 @@
 FROM gcc:13-bookworm AS builder
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends cmake \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY include ./include
 COPY src ./src
 COPY CMakeLists.txt ./CMakeLists.txt

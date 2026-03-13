@@ -11,6 +11,7 @@
 class Runtime {
 public:
     std::string source;
+    std::string sourceName = "<stdin>";
 
     void emit(const std::string &s);
     void emit(int v);
@@ -25,6 +26,9 @@ private:
     std::vector<std::string> buffer;
     std::unordered_map<std::string, Value> vars;
     std::unordered_map<std::string, bool> isConst;
+
+    std::string getLineText(int line) const;
+    void printCaretLine(const std::string &codeLine, int col) const;
 
     void executeStmt(const Stmt *stmt);
     void executeBlock(const BlockStmt *block);

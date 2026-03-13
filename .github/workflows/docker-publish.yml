@@ -2,6 +2,13 @@ name: docker-publish
 
 on:
   push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
     branches: [ "main" ]
     tags: [ "v*" ]
   pull_request:
@@ -25,6 +32,13 @@ jobs:
       - name: Build
         run: cmake --build build --config Release -j"$(nproc)"
 
+  publish-image:
+    runs-on: ubuntu-latest
+    needs: verify-build
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
   publish-docker:
     runs-on: ubuntu-latest
     needs: verify-build

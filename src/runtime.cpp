@@ -66,6 +66,57 @@ void Runtime::printCaretLine(const std::string &codeLine, int col) const {
     std::cout << sourceName << ":" << line << ":" << col << ": runtime error: " << msg << std::endl;
     std::cout << codeLine << std::endl;
     printCaretLine(codeLine, col);
+    std::vector<std::string> lines;
+    std::size_t start = 0;
+    while (currentLine < line && start < source.size()) {
+        if (source[start] == '\n') {
+            currentLine++;
+        }
+        start++;
+    }
+
+    if (currentLine != line) {
+        return "";
+    }
+
+    std::size_t end = start;
+    while (end < source.size() && source[end] != '\n') {
+        end++;
+    }
+
+    std::string codeLine = source.substr(start, end - start);
+    while (!codeLine.empty() && (codeLine.back() == ' ' || codeLine.back() == '\t')) {
+        codeLine.pop_back();
+    }
+    return codeLine;
+}
+
+void Runtime::printCaretLine(const std::string &codeLine, int col) const {
+    std::cout << "Runtime Error (line " << line << ", col " << col << "):" << std::endl;
+    std::cout << codeLine << std::endl;
+    for (int i = 1; i < col; ++i) {
+        if (i - 1 < static_cast<int>(codeLine.size()) && codeLine[i - 1] == '\t') {
+            std::cout << "\t";
+        } else {
+            std::cout << " ";
+        }
+    }
+    std::cout << "^" << std::endl;
+}
+
+[[noreturn]] void Runtime::reportError(int line, int col, const std::string &msg) const {
+    std::string codeLine = getLineText(line);
+    std::cout << sourceName << ":" << line << ":" << col << ": error: " << msg << std::endl;
+    std::cout << codeLine << std::endl;
+    printCaretLine(codeLine, col);
+    std::exit(1);
+}
+
+[[noreturn]] void Runtime::runtimeError(int line, int col, const std::string &msg) const {
+    std::string codeLine = getLineText(line);
+    std::cout << sourceName << ":" << line << ":" << col << ": runtime error: " << msg << std::endl;
+    std::cout << codeLine << std::endl;
+    printCaretLine(codeLine, col);
     std::exit(1);
 }
 
@@ -163,6 +214,7 @@ int Runtime::evalExpr(const Expr *expr) {
                 case TokenType::SLASH:
                     if (right == 0) {
                         runtimeError(binary->line, binary->col, "division by zero");
+                        runtimeError(0, 0, "division by zero");
                     }
                     return left / right;
                 case TokenType::GT:
@@ -174,6 +226,9 @@ int Runtime::evalExpr(const Expr *expr) {
                 default:
                     runtimeError(binary->line, binary->col, "invalid binary operator");
             }
+                    break;
+            }
+            break;
         }
     }
 

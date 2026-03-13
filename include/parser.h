@@ -50,6 +50,15 @@ enum class StmtKind {
     Repeat
 };
 
+enum class StmtKind {
+    Let,
+    Const,
+    Out,
+    Block,
+    If,
+    Repeat
+};
+
 struct Stmt {
     const StmtKind kind;
     explicit Stmt(StmtKind kind);
@@ -105,6 +114,7 @@ struct RepeatStmt final : Stmt {
 class Parser {
 public:
     Parser(std::vector<Token> tokens, const std::string &source, const std::string &sourceName);
+    Parser(std::vector<Token> tokens, const std::string &source);
     std::vector<std::unique_ptr<Stmt>> parseProgram();
 
 private:

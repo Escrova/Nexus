@@ -61,6 +61,7 @@ std::string Lexer::getLineText(int targetLine) const {
     std::string codeLine = getLineText(errorLine);
 
     std::cout << sourceName << ":" << errorLine << ":" << errorCol << ": error: " << msg << std::endl;
+    std::cout << "Syntax Error (line " << errorLine << ", col " << errorCol << "):" << std::endl;
     std::cout << codeLine << std::endl;
     for (int i = 1; i < errorCol; ++i) {
         if (i - 1 < static_cast<int>(codeLine.size()) && codeLine[i - 1] == '\t') {
@@ -70,6 +71,7 @@ std::string Lexer::getLineText(int targetLine) const {
         }
     }
     std::cout << "^" << std::endl;
+    std::cout << msg << std::endl;
     std::exit(1);
 }
 
@@ -135,6 +137,13 @@ std::vector<Token> Lexer::tokenize() {
             std::string id;
             id.reserve(16);
             while (std::isalnum(static_cast<unsigned char>(cur())) || cur() == '_') {
+            std::string id;
+            id.reserve(16);
+            while (std::isalnum(static_cast<unsigned char>(cur())) || cur() == '_') {
+        if (std::isalpha(static_cast<unsigned char>(ch))) {
+            std::string id;
+            id.reserve(16);
+            while (std::isalnum(static_cast<unsigned char>(cur()))) {
                 id += cur();
                 adv();
             }

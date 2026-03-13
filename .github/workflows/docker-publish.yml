@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: verify-build
     if: github.event_name != 'pull_request'
+  docker:
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -64,3 +66,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+

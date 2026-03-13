@@ -17,5 +17,9 @@ private:
     int col;
 
     char cur() const;
+    char next() const;
     void adv();
+
+    std::string getLineText(int targetLine) const;
+    [[noreturn]] void reportError(int errorLine, int errorCol, const std::string &msg) const;
 };

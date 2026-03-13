@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     runtime.source = src;
 
     Lexer lexer(src);
-    Parser parser(lexer.tokenize());
+    Parser parser(lexer.tokenize(), src);
     auto program = parser.parseProgram();
 
     runtime.execute(program);

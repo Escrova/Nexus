@@ -33,10 +33,21 @@ struct VariableExpr final : Expr {
 
 struct BinaryExpr final : Expr {
     TokenType op;
+    int line;
+    int col;
     std::unique_ptr<Expr> left;
     std::unique_ptr<Expr> right;
 
-    BinaryExpr(TokenType op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right);
+    BinaryExpr(TokenType op, int line, int col, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right);
+};
+
+enum class StmtKind {
+    Let,
+    Const,
+    Out,
+    Block,
+    If,
+    Repeat
 };
 
 enum class StmtKind {
@@ -102,11 +113,12 @@ struct RepeatStmt final : Stmt {
 
 class Parser {
 public:
-    explicit Parser(std::vector<Token> tokens);
+    Parser(std::vector<Token> tokens, const std::string &source);
     std::vector<std::unique_ptr<Stmt>> parseProgram();
 
 private:
     std::vector<Token> t;
+    const std::string &source;
     std::size_t p;
 
     Token &peek();
@@ -117,6 +129,8 @@ private:
 
     const Token &consume(TokenType type, const std::string &msg);
     [[noreturn]] void syntaxError(const Token &token, const std::string &msg) const;
+
+    std::string getLineText(int targetLine) const;
 
     std::unique_ptr<Stmt> statement();
     std::unique_ptr<Stmt> ifStatement();

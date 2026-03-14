@@ -66,6 +66,8 @@ void Runtime::printCaretLine(const std::string &codeLine, int col) const {
     std::cout << sourceName << ":" << line << ":" << col << ": runtime error: " << msg << std::endl;
     std::cout << codeLine << std::endl;
     printCaretLine(codeLine, col);
+    std::exit(1);
+}
     std::vector<std::string> lines;
     std::size_t start = 0;
     while (currentLine < line && start < source.size()) {

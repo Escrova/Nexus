@@ -70,6 +70,8 @@ void Runtime::printCaretLine(const std::string &codeLine, int col) const {
 }
     std::exit(1);
 }
+    std::exit(1);
+}
     std::vector<std::string> lines;
     std::size_t start = 0;
     while (currentLine < line && start < source.size()) {

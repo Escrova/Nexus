@@ -16,6 +16,7 @@ VariableExpr::VariableExpr(std::string name, int line, int col)
     : Expr(ExprKind::Variable), name(std::move(name)), line(line), col(col) {}
 BinaryExpr::BinaryExpr(TokenType op, int line, int col, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right)
     : Expr(ExprKind::Binary), op(op), line(line), col(col), left(std::move(left)), right(std::move(right)) {}
+
 LetStmt::LetStmt(std::string name, std::unique_ptr<Expr> initializer)
     : Stmt(StmtKind::Let), name(std::move(name)), initializer(std::move(initializer)) {}
 ConstStmt::ConstStmt(std::string name, std::unique_ptr<Expr> initializer)
@@ -43,6 +44,7 @@ Parser::Parser(std::vector<Token> tokens, const std::string &source, const std::
     : t(std::move(tokens)), source(source), sourceName(sourceName), p(0) {}
 Parser::Parser(std::vector<Token> tokens, const std::string &source)
     : Parser(std::move(tokens), source, kDefaultSourceName) {}
+    : t(std::move(tokens)), source(source), sourceName(source), p(0) {}
 
 Token &Parser::peek() { return t[p]; }
 Token &Parser::prev() { return t[p - 1]; }

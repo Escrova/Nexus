@@ -55,6 +55,7 @@ Run from file:
 
 ```bash
 ./build/nexus examples.nxt
+./build/nexus examples.nx
 ```
 
 Or pipe from stdin:

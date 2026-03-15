@@ -54,6 +54,7 @@ cmake --build build --config Release -j"$(nproc)"
 Run from file:
 
 ```bash
+./build/nexus examples.nxt
 ./build/nexus examples.nx
 ```
 
@@ -62,6 +63,8 @@ Or pipe from stdin:
 ```bash
 echo 'out("hello");' | ./build/nexus
 ```
+
+Source files are required to use the `.nxt` extension when passed as a file argument.
 
 ---
 

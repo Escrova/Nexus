@@ -38,6 +38,8 @@ RepeatStmt::RepeatStmt(std::string iterator, std::unique_ptr<Expr> countExpr, st
 
 Parser::Parser(std::vector<Token> tokens, const std::string &source, const std::string &sourceName)
     : t(std::move(tokens)), source(source), sourceName(sourceName), p(0) {}
+Parser::Parser(std::vector<Token> tokens, const std::string &source)
+    : Parser(std::move(tokens), source, "<stdin>") {}
 Token &Parser::peek() { return t[p]; }
 Token &Parser::prev() { return t[p - 1]; }
 bool Parser::atEnd() const { return t[p].type == TokenType::END; }

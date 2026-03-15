@@ -1,0 +1,160 @@
+# Nexus
+
+Nexus is a small interpreted scripting language implemented in C++.
+
+This README tracks project progress and documents what currently works.
+
+## Current Status
+
+### ✅ Done
+- CLI entrypoint that reads source from a file path or stdin.
+- Lexer with:
+  - identifiers, numbers, strings
+  - operators: `+ - * / > < = ==`
+  - punctuation: `() { } ;`
+  - keywords: `let const out if else repeat times`
+  - comments: `// line` and `/* block */`
+  - line/column diagnostics with source name
+- Parser + AST with:
+  - declarations: `let`, `const`
+  - output statement: `out(...)`
+  - control flow: `if / else if / else`
+  - loops: `repeat <ident> <expr> times { ... }`
+  - expression precedence: equality, comparison, add/sub, mul/div, grouping
+- Runtime with:
+  - integer arithmetic and comparisons
+  - variable environment + const tracking
+  - runtime diagnostics (with caret and location)
+
+### 🚧 In Progress / Not Implemented Yet
+- Assignment to existing variables (e.g. `x = x + 1;`)
+- Functions and function calls
+- Modules/imports
+- Rich types (arrays, maps/objects, booleans as first-class type)
+- Standard library (`fs`, `http`, `json`, `process`, etc.)
+- Bytecode VM / JIT (performance-focused execution backend)
+- Automated tests in CTest
+
+### 🎯 Next Milestones
+1. Add assignment statements and scoped blocks.
+2. Add functions + call stack.
+3. Add core stdlib (IO, JSON, HTTP, process).
+4. Move from AST-walk execution toward bytecode for speed.
+5. Add test suite + benchmarks.
+
+---
+
+## Build
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release -j"$(nproc)"
+```
+
+Run from file:
+
+```bash
+./build/nexus examples.nxt
+```
+
+Or pipe from stdin:
+
+```bash
+echo 'out("hello");' | ./build/nexus
+```
+
+Source files are required to use the `.nxt` extension when passed as a file argument.
+
+---
+
+## Language Examples
+
+## 1) Variables and output
+
+```nx
+let x = 10;
+const y = 3;
+out(x + y);
+```
+
+Expected output:
+
+```text
+13
+```
+
+## 2) Looping
+
+```nx
+repeat i 5 times {
+  out(i);
+}
+```
+
+Expected output:
+
+```text
+0
+1
+2
+3
+4
+```
+
+## 3) Conditionals
+
+```nx
+let n = 7;
+if n > 10 {
+  out("big");
+} else if n == 7 {
+  out("lucky");
+} else {
+  out("small");
+}
+```
+
+Expected output:
+
+```text
+lucky
+```
+
+## 4) Comments and grouping
+
+```nx
+// line comment
+/* block
+   comment */
+out((2 + 3) * 4);
+```
+
+Expected output:
+
+```text
+20
+```
+
+---
+
+## Docker
+
+Build image:
+
+```bash
+docker build -t nexus:local .
+```
+
+Run with stdin:
+
+```bash
+echo 'out("from container");' | docker run --rm -i nexus:local
+```
+
+---
+
+## CI/CD Notes
+
+The Docker publish workflow builds the project via CMake inside the image build stage.
+If C++ compilation fails, the Docker build step will fail as expected.
+

@@ -104,6 +104,7 @@ const Runtime::VariableSlot *Runtime::findVar(const std::string &name) const {
     return nullptr;
 }
 
+
 void Runtime::execute(const std::vector<std::unique_ptr<Stmt>> &program) {
     scopes.clear();
     pushScope();

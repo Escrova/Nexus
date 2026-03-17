@@ -29,6 +29,11 @@ This README tracks project progress and documents what currently works.
   - runtime diagnostics (with caret and location)
 
 ### 🚧 In Progress / Not Implemented Yet
+  - variable environment + const tracking
+  - runtime diagnostics (with caret and location)
+
+### 🚧 In Progress / Not Implemented Yet
+- Assignment to existing variables (e.g. `x = x + 1;`)
 - Functions and function calls
 - Modules/imports
 - Rich types (arrays, maps/objects, booleans as first-class type)
@@ -41,6 +46,11 @@ This README tracks project progress and documents what currently works.
 2. Add core stdlib (IO, JSON, HTTP, process).
 3. Move from AST-walk execution toward bytecode for speed.
 4. Add test suite + benchmarks.
+1. Add assignment statements and scoped blocks.
+2. Add functions + call stack.
+3. Add core stdlib (IO, JSON, HTTP, process).
+4. Move from AST-walk execution toward bytecode for speed.
+5. Add test suite + benchmarks.
 
 ---
 
@@ -55,6 +65,7 @@ Run from file:
 
 ```bash
 ./build/nexus examples.nxt
+./build/nexus examples.nx
 ```
 
 Or pipe from stdin:
@@ -72,6 +83,7 @@ Source files are required to use the `.nxt` extension when passed as a file argu
 ## 1) Variables and output
 
 ```nxt
+```nx
 let x = 10;
 const y = 3;
 out(x + y);
@@ -86,6 +98,7 @@ Expected output:
 ## 2) Looping
 
 ```nxt
+```nx
 repeat i 5 times {
   out(i);
 }
@@ -148,6 +161,9 @@ Expected output:
 ## 5) Conditionals
 
 ```nxt
+## 3) Conditionals
+
+```nx
 let n = 7;
 if n > 10 {
   out("big");
@@ -167,6 +183,9 @@ lucky
 ## 6) Comments and grouping
 
 ```nxt
+## 4) Comments and grouping
+
+```nx
 // line comment
 /* block
    comment */

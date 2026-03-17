@@ -7,18 +7,36 @@
 #include "parser.h"
 #include "runtime.h"
 
+
+namespace {
+bool hasNxtExtension(const std::string &path) {
+    static constexpr const char *kExt = ".nxt";
+    const std::size_t extLen = 4;
+    if (path.size() < extLen) {
+        return false;
+    }
+    return path.compare(path.size() - extLen, extLen, kExt) == 0;
+}
+}  // namespace
+
 int main(int argc, char **argv) {
     std::string src;
     std::string sourceName = "<stdin>";
 
     if (argc > 1) {
-        std::ifstream inputFile(argv[1]);
+        const std::string filePath = argv[1];
+        if (!hasNxtExtension(filePath)) {
+            std::cerr << "Expected a .nxt source file, got: " << filePath << std::endl;
+            return 1;
+        }
+
+        std::ifstream inputFile(filePath);
         if (!inputFile) {
             std::cerr << "Failed to open source file: " << argv[1] << std::endl;
             return 1;
         }
 
-        sourceName = argv[1];
+        sourceName = filePath;
 
         std::ostringstream buffer;
         buffer << inputFile.rdbuf();

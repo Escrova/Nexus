@@ -68,65 +68,50 @@ void Runtime::printCaretLine(const std::string &codeLine, int col) const {
     printCaretLine(codeLine, col);
     std::exit(1);
 }
-    std::exit(1);
-}
-    std::exit(1);
-}
-    std::vector<std::string> lines;
-    std::size_t start = 0;
-    while (currentLine < line && start < source.size()) {
-        if (source[start] == '\n') {
-            currentLine++;
-        }
-        start++;
-    }
 
-    if (currentLine != line) {
-        return "";
-    }
+void Runtime::pushScope() { scopes.emplace_back(); }
 
-    std::size_t end = start;
-    while (end < source.size() && source[end] != '\n') {
-        end++;
+void Runtime::popScope() {
+    if (!scopes.empty()) {
+        scopes.pop_back();
     }
-
-    std::string codeLine = source.substr(start, end - start);
-    while (!codeLine.empty() && (codeLine.back() == ' ' || codeLine.back() == '\t')) {
-        codeLine.pop_back();
-    }
-    return codeLine;
 }
 
-void Runtime::printCaretLine(const std::string &codeLine, int col) const {
-    std::cout << "Runtime Error (line " << line << ", col " << col << "):" << std::endl;
-    std::cout << codeLine << std::endl;
-    for (int i = 1; i < col; ++i) {
-        if (i - 1 < static_cast<int>(codeLine.size()) && codeLine[i - 1] == '\t') {
-            std::cout << "\t";
-        } else {
-            std::cout << " ";
+void Runtime::defineVar(const std::string &name, Value value, bool isConst) {
+    if (scopes.empty()) {
+        pushScope();
+    }
+    scopes.back()[name] = VariableSlot{value, isConst};
+}
+
+Runtime::VariableSlot *Runtime::findVar(const std::string &name) {
+    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
+        auto found = it->find(name);
+        if (found != it->end()) {
+            return &found->second;
         }
     }
-    std::cout << "^" << std::endl;
+    return nullptr;
 }
 
-[[noreturn]] void Runtime::reportError(int line, int col, const std::string &msg) const {
-    std::string codeLine = getLineText(line);
-    std::cout << sourceName << ":" << line << ":" << col << ": error: " << msg << std::endl;
-    std::cout << codeLine << std::endl;
-    printCaretLine(codeLine, col);
-    std::exit(1);
+const Runtime::VariableSlot *Runtime::findVar(const std::string &name) const {
+    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
+        auto found = it->find(name);
+        if (found != it->end()) {
+            return &found->second;
+        }
+    }
+    return nullptr;
 }
 
-[[noreturn]] void Runtime::runtimeError(int line, int col, const std::string &msg) const {
-    std::string codeLine = getLineText(line);
-    std::cout << sourceName << ":" << line << ":" << col << ": runtime error: " << msg << std::endl;
-    std::cout << codeLine << std::endl;
-    printCaretLine(codeLine, col);
-    std::exit(1);
-}
 void Runtime::execute(const std::vector<std::unique_ptr<Stmt>> &program) {
-    for (const auto &stmt : program) {
+    scopes.clear();
+    pushScope();
+    executeStatements(program);
+}
+
+void Runtime::executeStatements(const std::vector<std::unique_ptr<Stmt>> &statements) {
+    for (const auto &stmt : statements) {
         executeStmt(stmt.get());
     }
 }
@@ -136,17 +121,15 @@ void Runtime::executeStmt(const Stmt *stmt) {
         case StmtKind::Let: {
             const auto *letStmt = static_cast<const LetStmt *>(stmt);
             if (letStmt->initializer) {
-                vars[letStmt->name] = Value(true, evalExpr(letStmt->initializer.get()));
+                defineVar(letStmt->name, Value(true, evalExpr(letStmt->initializer.get())), false);
             } else {
-                vars[letStmt->name] = Value();
+                defineVar(letStmt->name, Value(), false);
             }
-            isConst[letStmt->name] = false;
             return;
         }
         case StmtKind::Const: {
             const auto *constStmt = static_cast<const ConstStmt *>(stmt);
-            vars[constStmt->name] = Value(true, evalExpr(constStmt->initializer.get()));
-            isConst[constStmt->name] = true;
+            defineVar(constStmt->name, Value(true, evalExpr(constStmt->initializer.get())), true);
             return;
         }
         case StmtKind::Out: {
@@ -158,13 +141,26 @@ void Runtime::executeStmt(const Stmt *stmt) {
             }
             return;
         }
+        case StmtKind::Assign: {
+            const auto *assignStmt = static_cast<const AssignStmt *>(stmt);
+            VariableSlot *slot = findVar(assignStmt->name);
+            if (slot == nullptr) {
+                runtimeError(assignStmt->line, assignStmt->col, "assignment to undefined variable '" + assignStmt->name + "'");
+            }
+            if (slot->isConst) {
+                runtimeError(assignStmt->line, assignStmt->col, "cannot assign to const variable '" + assignStmt->name + "'");
+            }
+            slot->value = Value(true, evalExpr(assignStmt->value.get()));
+            return;
+        }
         case StmtKind::Repeat: {
             const auto *repeatStmt = static_cast<const RepeatStmt *>(stmt);
             int count = evalExpr(repeatStmt->countExpr.get());
             for (int i = 0; i < count; ++i) {
-                vars[repeatStmt->iterator] = Value(true, i);
-                isConst[repeatStmt->iterator] = false;
-                executeBlock(repeatStmt->body.get());
+                pushScope();
+                defineVar(repeatStmt->iterator, Value(true, i), false);
+                executeStatements(repeatStmt->body->statements);
+                popScope();
             }
             return;
         }
@@ -185,9 +181,9 @@ void Runtime::executeStmt(const Stmt *stmt) {
 }
 
 void Runtime::executeBlock(const BlockStmt *block) {
-    for (const auto &stmt : block->statements) {
-        executeStmt(stmt.get());
-    }
+    pushScope();
+    executeStatements(block->statements);
+    popScope();
 }
 
 int Runtime::evalExpr(const Expr *expr) {
@@ -197,11 +193,11 @@ int Runtime::evalExpr(const Expr *expr) {
 
         case ExprKind::Variable: {
             const auto *variable = static_cast<const VariableExpr *>(expr);
-            auto it = vars.find(variable->name);
-            if (it == vars.end() || !it->second.initialized) {
+            const VariableSlot *slot = findVar(variable->name);
+            if (slot == nullptr || !slot->value.initialized) {
                 runtimeError(variable->line, variable->col, "use of uninitialized variable '" + variable->name + "'");
             }
-            return it->second.number;
+            return slot->value.number;
         }
 
         case ExprKind::Binary: {

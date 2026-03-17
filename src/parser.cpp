@@ -21,6 +21,8 @@ OutStmt::OutStmt(std::string text)
     : Stmt(StmtKind::Out), stringLiteral(true), text(std::move(text)), expression(nullptr) {}
 OutStmt::OutStmt(std::unique_ptr<Expr> expression)
     : Stmt(StmtKind::Out), stringLiteral(false), expression(std::move(expression)) {}
+AssignStmt::AssignStmt(std::string name, int line, int col, std::unique_ptr<Expr> value)
+    : Stmt(StmtKind::Assign), name(std::move(name)), line(line), col(col), value(std::move(value)) {}
 BlockStmt::BlockStmt(std::vector<std::unique_ptr<Stmt>> statements)
     : Stmt(StmtKind::Block), statements(std::move(statements)) {}
 IfStmt::IfStmt(std::unique_ptr<Expr> condition,
@@ -152,6 +154,18 @@ std::unique_ptr<Stmt> Parser::statement() {
         consume(TokenType::RPAREN, "expected ')'");
         consume(TokenType::SEMICOLON, "expected ';'");
         return outStmt;
+    }
+
+    if (peek().type == TokenType::LBRACE) {
+        return block();
+    }
+
+    if (peek().type == TokenType::IDENT && p + 1 < t.size() && t[p + 1].type == TokenType::EQ) {
+        const Token &nameToken = consume(TokenType::IDENT, "expected variable name");
+        consume(TokenType::EQ, "expected '='");
+        auto valueExpr = expression();
+        consume(TokenType::SEMICOLON, "expected ';'");
+        return std::make_unique<AssignStmt>(nameToken.value, nameToken.line, nameToken.col, std::move(valueExpr));
     }
 
     if (match(TokenType::REPEAT)) {

@@ -45,6 +45,7 @@ enum class StmtKind {
     Let,
     Const,
     Out,
+    Assign,
     Block,
     If,
     Repeat
@@ -77,6 +78,15 @@ struct OutStmt final : Stmt {
 
     explicit OutStmt(std::string text);
     explicit OutStmt(std::unique_ptr<Expr> expression);
+};
+
+struct AssignStmt final : Stmt {
+    std::string name;
+    int line;
+    int col;
+    std::unique_ptr<Expr> value;
+
+    AssignStmt(std::string name, int line, int col, std::unique_ptr<Expr> value);
 };
 
 struct BlockStmt final : Stmt {

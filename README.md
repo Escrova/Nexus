@@ -23,6 +23,12 @@ This README tracks project progress and documents what currently works.
   - expression precedence: equality, comparison, add/sub, mul/div, grouping
 - Runtime with:
   - integer arithmetic and comparisons
+  - variable declarations and reassignment (`x = ...;`)
+  - block-based lexical scoping for `{ ... }`, `if/else`, and `repeat` bodies
+  - nested loop/conditional scope isolation (inner variables do not overwrite outer scope bindings)
+  - runtime diagnostics (with caret and location)
+
+### 🚧 In Progress / Not Implemented Yet
   - variable environment + const tracking
   - runtime diagnostics (with caret and location)
 
@@ -36,6 +42,10 @@ This README tracks project progress and documents what currently works.
 - Automated tests in CTest
 
 ### 🎯 Next Milestones
+1. Add functions + call stack.
+2. Add core stdlib (IO, JSON, HTTP, process).
+3. Move from AST-walk execution toward bytecode for speed.
+4. Add test suite + benchmarks.
 1. Add assignment statements and scoped blocks.
 2. Add functions + call stack.
 3. Add core stdlib (IO, JSON, HTTP, process).
@@ -72,6 +82,7 @@ Source files are required to use the `.nxt` extension when passed as a file argu
 
 ## 1) Variables and output
 
+```nxt
 ```nx
 let x = 10;
 const y = 3;
@@ -86,6 +97,7 @@ Expected output:
 
 ## 2) Looping
 
+```nxt
 ```nx
 repeat i 5 times {
   out(i);
@@ -102,6 +114,53 @@ Expected output:
 4
 ```
 
+
+## 3) Reassignment and scoped blocks
+
+```nxt
+let x = 1;
+{
+  let x = 10;
+  x = x + 5;
+  out(x);
+}
+out(x);
+```
+
+Expected output:
+
+```text
+15
+1
+```
+
+## 4) Nested loop scope isolation
+
+```nxt
+let i = 99;
+repeat i 2 times {
+  out(i);
+  {
+    let i = 42;
+    out(i);
+  }
+}
+out(i);
+```
+
+Expected output:
+
+```text
+0
+42
+1
+42
+99
+```
+
+## 5) Conditionals
+
+```nxt
 ## 3) Conditionals
 
 ```nx
@@ -121,6 +180,9 @@ Expected output:
 lucky
 ```
 
+## 6) Comments and grouping
+
+```nxt
 ## 4) Comments and grouping
 
 ```nx
